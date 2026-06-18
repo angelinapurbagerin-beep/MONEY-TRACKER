@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Money Tracker</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+}
+
+.container {
+  width: 400px;
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+h2, h3 {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.balance-container {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.balance-container h1 {
+  margin-top: 10px;
+}
+
+.inc-exp-container {
+  background: #fafafa;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.money {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.plus {
+  color: green;
+}
+
+.minus {
+  color: red;
+}
+
+.list {
+  list-style: none;
+  margin-bottom: 20px;
+}
+
+.list li {
+  background: #fff;
+  padding: 10px;
+  margin: 8px 0;
+  border-right: 5px solid;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list li.plus {
+  border-color: green;
+}
+
+.list li.minus {
+  border-color: red;
+}
+
+.delete-btn {
+  background: red;
+  color: white;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.form-control {
+  margin-bottom: 15px;
+}
+
+.form-control label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-control input {
+  width: 100%;
+  padding: 10px;
+}
+
+.btn {
+  width: 100%;
+  padding: 10px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #45a049;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>💰 Money Tracker</h2>
+
+  <div class="balance-container">
+    <h4>Saldo Kamu</h4>
+    <h1 id="balance">Rp 0</h1>
+  </div>
+
+  <div class="inc-exp-container">
+    <div>
+      <h4>Pemasukan</h4>
+      <p id="money-plus" class="money plus">+Rp 0</p>
+    </div>
+
+    <div>
+      <h4>Pengeluaran</h4>
+      <p id="money-minus" class="money minus">-Rp 0</p>
+    </div>
+  </div>
+
+  <h3>📜 Histori Transaksi</h3>
+  <ul id="list" class="list"></ul>
+
+  <h3>➕ Tambah Transaksi Baru</h3>
+
+  <form id="form">
+    <div class="form-control">
+      <label for="text">Keterangan</label>
+      <input
+        type="text"
+        id="text"
+        placeholder="Contoh: Jajan boba, Uang jajan..."
+        required
+      >
+    </div>
+
+    <div class="form-control">
+      <label for="amount">
+        Jumlah
+        <br>
+        <small>(Negatif = pengeluaran, Positif = pemasukan)</small>
+      </label>
+
+      <input
+        type="number"
+        id="amount"
+        placeholder="Contoh: -20000 atau 50000"
+        required
+      >
+    </div>
+
+    <button class="btn">Tambah Transaksi</button>
+  </form>
+</div>
+
+<script>
+const balance = document.getElementById("balance");
+const moneyPlus = document.getElementById("money-plus");
+const moneyMinus = document.getElementById("money-minus");
+const list = document.getElementById("list");
+const form = document.getElementById("form");
+const text = document.getElementById("text");
+const amount = document.getElementById("amount");
+
+let transactions = [];
+
+function addTransaction(e) {
+  e.preventDefault();
+
+  if (
+    text.value.trim() === "" ||
+    amount.value.trim() === ""
+  ) {
+    return;
+  }
+
+  const transaction = {
+    id: Date.now(),
+    text: text.value,
+    amount: +amount.value
+  };
+
+  transactions.push(transaction);
+
+  updateDOM();
+
+  text.value = "";
+  amount.value = "";
+}
+
+function updateDOM() {
+  list.innerHTML = "";
+
+  transactions.forEach(transaction => {
+    const sign = transaction.amount < 0 ? "-" : "+";
+
+    const item = document.createElement("li");
+
+    item.classList.add(
+      transaction.amount < 0 ? "minus" : "plus"
+    );
+
+    item.innerHTML = `
+      ${transaction.text}
+      <span>
+        ${sign}Rp ${Math.abs(
+          transaction.amount
+        ).toLocaleString("id-ID")}
+      </span>
+      <button
+        class="delete-btn"
+        onclick="removeTransaction(${transaction.id})"
+      >
+        X
+      </button>
+    `;
+
+    list.appendChild(item);
+  });
+
+  updateValues();
+}
+
+function updateValues() {
+  const amounts = transactions.map(
+    transaction => transaction.amount
+  );
+
+  const total = amounts.reduce(
+    (acc, item) => acc + item,
+    0
+  );
+
+  const income = amounts
+    .filter(item => item > 0)
+    .reduce((acc, item) => acc + item, 0);
+
+  const expense = amounts
+    .filter(item => item < 0)
+    .reduce((acc, item) => acc + item, 0);
+
+  balance.innerText =
+    "Rp " + total.toLocaleString("id-ID");
+
+  moneyPlus.innerText =
+    "+Rp " + income.toLocaleString("id-ID");
+
+  moneyMinus.innerText =
+    "-Rp " +
+    Math.abs(expense).toLocaleString("id-ID");
+}
+
+function removeTransaction(id) {
+  transactions = transactions.filter(
+    transaction => transaction.id !== id
+  );
+
+  updateDOM();
+}
+
+form.addEventListener("submit", addTransaction);
+</script>
+
+</body>
+  </html>
